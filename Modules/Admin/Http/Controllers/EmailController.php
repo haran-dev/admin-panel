@@ -271,7 +271,6 @@ class EmailController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Messages sent successfully.',
-                'redirect_url' => url('/sms/view'),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -366,77 +365,25 @@ class EmailController extends Controller
     }
 
 
-    public function update(RolesRequest $request)
+    public function update(Request $request, $id)
     {
-        DB::beginTransaction();
-        try {
-            $postArray = (object) $request->all();
-            $actionId =  $postArray->action_id;
-            $user_id = session('user_id');
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|max:255'
+        ]);
 
 
-            if ($postArray && $actionId) {
-                $role = Roles::where('id', $actionId)->first();
-                $role->update([
-                    'name' => $postArray->roles_name,
-                    'status' => 1,
-                    'guard_name' => 'web',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-                $permissions = Permission::whereIn('id', $postArray->permissions)->pluck('name')->toArray();
-                $role->syncPermissions($permissions);
-            } else {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Something went wrong. Please try again.',
-                ]);
-            }
 
-            DB::commit();
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Role updated successfully.',
-                'redirect_url' => url('/roles/view'),
-            ]);
-        } catch (\Exception $e) {
-            // Rollback in case of an error
-            DB::rollBack();
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Something went wrong. Please try again.',
-                'error' => $e->getMessage(),
-            ]);
-        }
+        $emails = EmailMarketting::findOrFail($id);
+        $emails->name = $request->name;
+        $emails->email = $request->email;
+        $emails->save();
+
+        return response()->json(['status' => 'success', 'message' => 'Data updated successfully.']);
     }
 
 
-    public function rolesStatusUpdate(Request $request)
-    {
-        try {
-            $roles = Roles::find($request->id);
 
-            if (!$roles) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Category not find',
-                ]);
-            }
-
-            $roles->status = $request->status;
-            $roles->save();
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Role status updated.',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'An error occurred while updating category status.' . $e->getMessage(),
-            ]);
-        }
-    }
 
 
     public function delete(Request $request)

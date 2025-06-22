@@ -138,16 +138,6 @@ $(document).on('change', '.status-switch', function () {
 
 
 
-
-
-
-
-
-
-
-
-
-
 // AJAX POST function
 function ajax_post(url, data, spinnerContainer) {
     spinnerContainer.show(); // Show the spinner

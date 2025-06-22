@@ -108,6 +108,19 @@
                 },
                 { data: 'name', name: 'name' },
                 { data: 'email', name: 'email' },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        return `
+                            <button class="btn btn-sm btn-secondary edit-btn" data-id="${row.DT_RowId}"><i class="fa fa-edit"></i> Edit</button>
+                            <button class="btn btn-sm btn-danger delete-btn" data-id="${row.DT_RowId}"><i class="fa fa-trash"></i> Delete</button>
+                            <button class="btn btn-sm btn-success save-btn d-none" data-id="${row.DT_RowId}"><i class="fa fa-save"></i> Save</button>
+                            <button class="btn btn-sm btn-warning cancel-btn d-none" data-id="${row.DT_RowId}"><i class="fa fa-times"></i> Cancel</button>
+                        `;
+                    },
+                    orderable: false,
+                    searchable: false
+                }
                 
             ]
         });
@@ -169,36 +182,14 @@
                             
                             console.log(response);
                             if (response.status === "success") {
-                                $.notify.addStyle("noIconSuccess", {
-                                    html: `
-                                            <div>
-                                                <span data-notify-text/>
-                                            </div>
-                                        `,
-                                    classes: {
-                                        base: {
-                                            "background-color": "#4CAF50",
-                                            color: "#fff",
-                                            padding: "10px",
-                                            "border-radius": "5px",
-                                            "box-shadow": "0 2px 10px rgba(0,0,0,0.2)",
-                                            "max-width": "500px",
-                                            "z-index": "20000 !important",
-                                        },
-                                    },
-                                });
-
-                                $.notify(response.message, {
-                                    style: "noIconSuccess",
-                                    position: "top right",
-                                });
-
-                                window.location.href = response.redirect_url;
+                                showSuccessToast(response.message);
+                                $('#basic-datatable').DataTable().ajax.reload(null, false);
                             }
                             
                         },
                         error: function (xhr) {
                             console.error(xhr.responseText);
+                            showErrorToast(response.message);
                         }
                     });
                 } else {
@@ -206,6 +197,63 @@
                 }
             }
         });
+
+
+        // Edit Row
+        $(document).on('click', '.edit-btn', function () {
+            let row = $(this).closest('tr');
+            let nameCell = row.find('td').eq(1);
+            let numberCell = row.find('td').eq(2);
+
+            nameCell.attr('data-original', nameCell.text().trim());
+            numberCell.attr('data-original', numberCell.text().trim());
+
+            nameCell.html(`<input type="text" class="form-control form-control-sm edit-name" value="${nameCell.attr('data-original')}">`);
+            numberCell.html(`<input type="text" class="form-control form-control-sm edit-email" value="${numberCell.attr('data-original')}">`);
+
+            row.find('.edit-btn, .delete-btn').addClass('d-none');
+            row.find('.save-btn, .cancel-btn').removeClass('d-none');
+        });
+
+        // Cancel Edit
+        $(document).on('click', '.cancel-btn', function () {
+            let row = $(this).closest('tr');
+            let nameCell = row.find('td').eq(1);
+            let numberCell = row.find('td').eq(2);
+
+            nameCell.text(nameCell.attr('data-original'));
+            numberCell.text(numberCell.attr('data-original'));
+
+            row.find('.save-btn, .cancel-btn').addClass('d-none');
+            row.find('.edit-btn, .delete-btn').removeClass('d-none');
+        });
+
+        // Save Button (for example only; you'll need backend support to update DB)
+        $(document).on('click', '.save-btn', function () {
+            let row = $(this).closest('tr');
+            let id = $(this).data('id');
+            let name = row.find('.edit-name').val();
+            let email = row.find('.edit-email').val();
+
+            $.ajax({
+                url: '/email/update/' + id,
+                method: 'POST',
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    name: name,
+                    email: email
+                },
+                success: function (res) {
+                    table.ajax.reload(null, false); // reload table without resetting pagination
+                },
+                error: function (xhr) {
+                    alert("Update failed!");
+                }
+            });
+        });
+
+
+
     });
 
 

@@ -168,6 +168,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/email/send', [EmailController::class, 'sendEmail'])
     ->name('email-send');
 
+      Route::post('/email/update/{id}', [EmailController::class, 'update']);
+
 
  
 });
