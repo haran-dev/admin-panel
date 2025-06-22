@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker-booking-service
+spec:
+  selector:
+    app: worker-booking
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 8000        # The port your service will expose inside the cluster
+      targetPort: 8000  # The port your app listens on inside the pod
+      nodePort: 30080   # External port on your node (you can pick between 30000-32767)
