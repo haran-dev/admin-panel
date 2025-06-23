@@ -3,19 +3,29 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+
 
 class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create permissions
+        // ❗ Clear cache of spatie
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        // ❗ Clean tables to avoid duplicates
+        DB::table('role_has_permissions')->truncate();
+        DB::table('permissions')->truncate();
+        DB::table('roles')->truncate();
+
+        // ✅ Your permission list
         $permissions = [
-            'read dashboard', 
-            'create categories', 
-            'read categories', 
-            'update categories', 
+            'read dashboard',
+            'create categories',
+            'read categories',
+            'update categories',
             'delete categories',
             'create roles',
             'read roles',
@@ -25,26 +35,25 @@ class RolePermissionSeeder extends Seeder
             'read user',
             'update user',
             'delete user',
-
             'create sms',
             'read sms',
             'update sms',
             'delete sms',
-
             'create email',
             'read email',
             'update email',
             'delete email',
-
+            'create settings',
+            'read settings',
+            'update settings',
+            'delete settings',
         ];
-        
+
         foreach ($permissions as $perm) {
-            Permission::firstOrCreate(['name' => $perm]);
+            Permission::create(['name' => $perm]);
         }
 
-        $admin = Role::firstOrCreate(['name' => 'admin']);
+        $admin = Role::create(['name' => 'admin']);
         $admin->givePermissionTo(Permission::all());
-
-
     }
 }
